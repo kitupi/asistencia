@@ -2,31 +2,51 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asistencia</title>
+
 <style>
 body { font-family: sans-serif; padding: 10px; }
+
 .alumno {
   display: flex;
   justify-content: space-between;
-  margin: 8px 0;
+  align-items: center;
+  margin: 10px 0;
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
 }
+
 button {
   font-size: 18px;
   padding: 10px;
   margin-left: 5px;
+  border: none;
+  border-radius: 6px;
 }
+
 .presente { background: #4CAF50; color: white; }
 .ausente { background: #f44336; color: white; }
+
+.activo {
+  outline: 3px solid black;
+}
+
+#guardar {
+  width: 100%;
+  margin-top: 20px;
+  font-size: 20px;
+  padding: 15px;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Asistencia!</h2>
+<h2>Asistencia</h2>
 
-<div id="lista"></div>
+<div id="lista">Cargando alumnos...</div>
 
-<button onclick="guardar()" style="width:100%; margin-top:20px; font-size:20px;">
-GUARDAR
-</button>
+<button id="guardar" onclick="guardar()">GUARDAR</button>
 
 <script>
 const URL = "https://script.google.com/macros/s/AKfycbx71dYg_Z39mgsRj09tbblAIXh8mBE6v1zpdpoE_lXcB5HsMI4JN2xwhbkdL4GMEeHm/exec";
@@ -34,9 +54,9 @@ const URL = "https://script.google.com/macros/s/AKfycbx71dYg_Z39mgsRj09tbblAIXh8
 let alumnos = [];
 let estado = {};
 
-async function cargar() {
-  const res = await fetch(URL);
-  alumnos = await res.json();
+// 🔹 JSONP callback (esto evita CORS)
+function recibirAlumnos(data) {
+  alumnos = data;
 
   const cont = document.getElementById("lista");
   cont.innerHTML = "";
@@ -59,15 +79,24 @@ async function cargar() {
   });
 }
 
+// 🔹 Cargar alumnos usando JSONP
+function cargar() {
+  const script = document.createElement("script");
+  script.src = URL + "?callback=recibirAlumnos";
+  document.body.appendChild(script);
+}
+
+// 🔹 Selección visual
 function setEstado(i, val, btn) {
   estado[i] = val;
 
   const botones = btn.parentElement.querySelectorAll("button");
-  botones.forEach(b => b.style.opacity = "0.5");
+  botones.forEach(b => b.classList.remove("activo"));
 
-  btn.style.opacity = "1";
+  btn.classList.add("activo");
 }
 
+// 🔹 Guardar (sin CORS)
 async function guardar() {
   const data = alumnos.map((a, i) => ({
     apellido: a.apellido,
@@ -77,12 +106,14 @@ async function guardar() {
 
   await fetch(URL, {
     method: "POST",
-    body: JSON.stringify({ asistencia: data })
+    body: JSON.stringify({ asistencia: data }),
+    mode: "no-cors"
   });
 
   alert("Asistencia guardada");
 }
 
+// iniciar
 cargar();
 </script>
 
