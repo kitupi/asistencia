@@ -2,15 +2,12 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Asistencia</title>
-
 <style>
 body { font-family: sans-serif; padding: 10px; }
 
 .alumno {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin: 10px 0;
   padding: 8px;
   border-bottom: 1px solid #ccc;
@@ -20,16 +17,13 @@ button {
   font-size: 18px;
   padding: 10px;
   margin-left: 5px;
-  border: none;
   border-radius: 6px;
+  border: none;
 }
 
-.presente { background: #4CAF50; color: white; }
-.ausente { background: #f44336; color: white; }
-
-.activo {
-  outline: 3px solid black;
-}
+.presente { background: green; color: white; }
+.ausente { background: red; color: white; }
+.activo { outline: 3px solid black; }
 
 #guardar {
   width: 100%;
@@ -42,21 +36,21 @@ button {
 
 <body>
 
-<h2>Asistencia!!</h2>
+<h2>Asistencia</h2>
 
-<div id="lista">Cargando alumnos...</div>
+<div id="lista">Cargando...</div>
 
 <button id="guardar" onclick="guardar()">GUARDAR</button>
 
 <script>
-const URL = "https://script.google.com/macros/s/AKfycbzpkrhzAGjwpGN_fqN4epMmsGSJv-NI2TguRDLw_rolOD9HXCbRRShJDHForH4e3nE/exec";
+const BASE = "https://joecoolman.pythonanywhere.com";
 
 let alumnos = [];
 let estado = {};
 
-// 🔹 JSONP callback (esto evita CORS)
-function recibirAlumnos(data) {
-  alumnos = data;
+async function cargar() {
+  const res = await fetch(BASE + "/alumnos");
+  alumnos = await res.json();
 
   const cont = document.getElementById("lista");
   cont.innerHTML = "";
@@ -79,14 +73,6 @@ function recibirAlumnos(data) {
   });
 }
 
-// 🔹 Cargar alumnos usando JSONP
-function cargar() {
-  const script = document.createElement("script");
-  script.src = URL + "?callback=recibirAlumnos";
-  document.body.appendChild(script);
-}
-
-// 🔹 Selección visual
 function setEstado(i, val, btn) {
   estado[i] = val;
 
@@ -96,7 +82,6 @@ function setEstado(i, val, btn) {
   btn.classList.add("activo");
 }
 
-// 🔹 Guardar (sin CORS)
 async function guardar() {
   const data = alumnos.map((a, i) => ({
     apellido: a.apellido,
@@ -104,16 +89,17 @@ async function guardar() {
     estado: estado[i] || "A"
   }));
 
-  await fetch(URL, {
+  await fetch(BASE + "/guardar", {
     method: "POST",
-    body: JSON.stringify({ asistencia: data }),
-    mode: "no-cors"
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
   });
 
   alert("Asistencia guardada");
 }
 
-// iniciar
 cargar();
 </script>
 
